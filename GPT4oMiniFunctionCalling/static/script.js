@@ -20,11 +20,9 @@ function sendMessage() {
         .then(data => {
             if (data.conversation) {
                 conversation = data.conversation;
-                // Add the AI's response to the UI
                 let aiResponse = conversation[conversation.length - 1].content;
                 addMessage('ai', aiResponse);
             } else if (data.response) {
-                // Fallback for the current API response format
                 addMessage('ai', data.response);
                 conversation.push({"role": "assistant", "content": data.response});
             }
@@ -40,7 +38,20 @@ function addMessage(sender, text) {
     var chatMessages = document.getElementById('chat-messages');
     var messageElement = document.createElement('div');
     messageElement.classList.add('message', sender + '-message');
-    messageElement.textContent = text;
+    
+    // Convert the text to HTML, preserving line breaks and lists
+    var formattedText = text
+        .replace(/\n/g, '</p><p>')
+        .replace(/^\d+\.\s/gm, '<ol><li>') + '</li></ol>';
+    
+    formattedText = '<p>' + formattedText + '</p>';
+    formattedText = formattedText
+        .replace(/<\/p><p><ol>/g, '<ol>')
+        .replace(/<\/ol><\/p><p>/g, '</ol>')
+        .replace(/<p><\/p>/g, '');
+    
+    messageElement.innerHTML = formattedText;
+    
     chatMessages.appendChild(messageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
