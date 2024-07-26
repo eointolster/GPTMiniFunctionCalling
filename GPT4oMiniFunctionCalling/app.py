@@ -12,9 +12,9 @@ app = Flask(__name__)
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))  # Make sure to set this environment variable
 function_manager = FunctionManager()
 
-def run_conversation(user_input):
+def run_conversation(conversation):
     print("Starting conversation")
-    messages = [{"role": "user", "content": user_input}]
+    messages = conversation
     
     print("Setting up functions")
 
@@ -22,7 +22,7 @@ def run_conversation(user_input):
         print("Sending request to OpenAI")
         try:
             response = client.chat.completions.create(
-                model="gpt-4-0613",  # or "gpt-4" if you have access
+                model="gpt-4o-mini",  # or "gpt-4" if you have access
                 messages=messages,
                 functions=function_manager.get_all_function_schemas(),
                 function_call="auto",
@@ -69,13 +69,26 @@ def index():
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    user_input = request.json['message']
     try:
-        response = run_conversation(user_input)
-        return jsonify({'response': response})
+        if 'conversation' in request.json:
+            conversation = request.json['conversation']
+            if not conversation:
+                return jsonify({'error': 'Conversation is empty'}), 400
+            user_input = conversation[-1]['content']
+        elif 'message' in request.json:
+            user_input = request.json['message']
+            conversation = [{"role": "user", "content": user_input}]
+        else:
+            return jsonify({'error': 'Invalid request format'}), 400
+
+        response = run_conversation(conversation)
+        
+        if isinstance(response, str):
+            conversation.append({"role": "assistant", "content": response})
+        
+        return jsonify({'conversation': conversation})
     except Exception as e:
         app.logger.error(f"An error occurred: {str(e)}", exc_info=True)
         return jsonify({'error': f"An error occurred: {str(e)}"}), 500
-
 if __name__ == '__main__':
     app.run(debug=True)
