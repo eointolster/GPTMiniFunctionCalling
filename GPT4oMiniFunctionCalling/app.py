@@ -22,7 +22,7 @@ def run_conversation(conversation):
         print("Sending request to OpenAI")
         try:
             response = client.chat.completions.create(
-                model="gpt-4o-mini",  # or "gpt-4" if you have access
+                model="gpt-4-0613",  # or "gpt-4" if you have access
                 messages=messages,
                 functions=function_manager.get_all_function_schemas(),
                 function_call="auto",
@@ -30,16 +30,13 @@ def run_conversation(conversation):
             
             response_message = response.choices[0].message
 
-            # Check if there's content in the response
-            if response_message.content:
-                # Add the response to the conversation history
-                messages.append({"role": "assistant", "content": response_message.content})
-
             # Check if there's a function call
             if response_message.function_call:
                 function_name = response_message.function_call.name
                 function_args = json.loads(response_message.function_call.arguments)
+                print(f"Calling function: {function_name} with args: {function_args}")
                 function_response = function_manager.call_function(function_name, function_args)
+                print(f"Function response: {function_response}")
                 
                 # Convert the function response to a string
                 if isinstance(function_response, bool):
@@ -47,17 +44,20 @@ def run_conversation(conversation):
                 elif not isinstance(function_response, str):
                     function_response = json.dumps(function_response)
                 
-                messages.append(
-                    {
-                        "role": "function",
-                        "name": function_name,
-                        "content": function_response,
-                    }
-                )
-                # Continue the conversation to get AI's response to the function output
+                # Add the function call and result to the conversation
+                messages.append({
+                    "role": "function",
+                    "name": function_name,
+                    "content": function_response,
+                })
+                
+                # Get AI's interpretation of the function result
                 continue
-            else:
-                return response_message.content or "I'm sorry, I don't have a response for that."
+            
+            # If there's content in the response, add it to the conversation
+            if response_message.content:
+                messages.append({"role": "assistant", "content": response_message.content})
+                return response_message.content
 
         except Exception as e:
             print(f"An error occurred: {str(e)}")
