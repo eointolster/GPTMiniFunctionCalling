@@ -46,6 +46,18 @@ body {
     border-radius: 20px;
     max-width: 80%;
     animation: fadeIn 0.5s ease-out;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+.message p {
+    margin: 0;
+}
+
+.message ol, .message ul {
+    margin: 5px 0;
+    padding-left: 20px;
 }
 
 .user-message {
@@ -90,4 +102,26 @@ button:hover {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+#user-input {
+    flex-grow: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 20px;
+    margin-right: 10px;
+    resize: none;
+    overflow: hidden;
+    min-height: 40px;
+    max-height: 120px;
+    font-family: 'Roboto', Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+#input-container {
+    display: flex;
+    padding: 10px;
+    background-color: #f9f9f9;
+    align-items: flex-end;
 }
