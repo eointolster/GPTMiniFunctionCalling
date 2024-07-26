@@ -20,12 +20,21 @@ class FunctionManager:
         for root, dirs, files in os.walk(functions_dir):
             for file in files:
                 if file.endswith('.py') and file != '__init__.py':
-                    module_path = os.path.join(root, file).replace('/', '.').replace('\\', '.')[:-3]
-                    module = importlib.import_module(module_path)
+                    # Construct the full path to the file
+                    full_path = os.path.join(root, file)
+                    # Create a module name from the file path
+                    module_name = os.path.splitext(full_path)[0].replace(os.path.sep, '.')
+                    
+                    # Load the module
+                    spec = importlib.util.spec_from_file_location(module_name, full_path)
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    
                     for attr_name in dir(module):
                         attr = getattr(module, attr_name)
                         if callable(attr) and hasattr(attr, 'schema'):
                             self.functions[attr_name] = attr
+                            print(f"Loaded function: {attr_name}")  # Debug print
         self.update_function_keywords()
 
     def generate_keywords(self, func_name, func_description):
@@ -76,7 +85,10 @@ class FunctionManager:
 
     def call_function(self, function_name, args):
         if function_name in self.functions:
-            return self.functions[function_name](**args)
+            print(f"Calling function {function_name} with args: {args}")
+            result = self.functions[function_name](**args)
+            print(f"Function {function_name} returned: {result}")
+            return result
         else:
             raise ValueError(f"Function {function_name} not found")
 
